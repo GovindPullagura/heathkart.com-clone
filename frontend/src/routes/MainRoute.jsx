@@ -11,22 +11,46 @@ import AccountInfo from "../pages/Home/AccountInfo";
 import AdminPage from "../admin/pages/AdminPage";
 import CheckoutPage from "../pages/CheckoutPage";
 import Payment from "../pages/Payment";
+import PaymentSuccess from "../pages/PaymentSuccess";
+
 const MainRoute = () => {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<PrivateRoute><LoginPage /></PrivateRoute>} />
       <Route path="/register" element={<Signup />} />
       <Route path="/product/:id" element={<SingleProductPage />} />
       <Route path="/product/multi/:category" element={<MultiProductPage />} />
-      <Route path="/checkout" element={ <PrivateRoute><CheckoutPage /></PrivateRoute> } />
-      <Route path="/payment" element={ <PrivateRoute>< Payment/></PrivateRoute> } />
+      <Route
+        path="/checkout"
+        element={
+          <PrivateRoute>
+            <CheckoutPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/payment"
+        element={
+          <PrivateRoute>
+            <Payment />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/paymentsuccess"
+        element={
+          <PrivateRoute>
+            <PaymentSuccess />
+          </PrivateRoute>
+        }
+      />
       <Route
         path="/profile"
         element={
           <PrivateRoute>
             <AccountInfo />
-            </PrivateRoute>
+          </PrivateRoute>
         }
       />
       <Route path="*" element={<h1>Nothing Found</h1>} />

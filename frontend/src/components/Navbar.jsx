@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -12,6 +12,8 @@ import {
   InputLeftElement,
   MenuButton,
   Flex,
+  Badge,
+  Text,
 } from "@chakra-ui/react";
 import Logo from "../assets/healthifyLogo.png";
 import {
@@ -27,22 +29,44 @@ import { BiLogOut, BiLogIn } from "react-icons/bi";
 import { Search2Icon } from "@chakra-ui/icons";
 import SideDrawer from "./SideDrawer";
 import axios from "axios";
-import { Link } from "react-router-dom";
-import { useDispatch, useSelector,useNavigate } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../redux/AuthReducer/action";
-
+import { getCartData } from "../redux/CartReducer/action";
+import { BASE_URL } from "../constants/constants";
 const Navbar = () => {
   const [query, setQuery] = useState("");
-  const { isLoggedIn, name } = useSelector((store) => store.authReducer);
+  const [results, setResults] = useState([]);
+  const { isLoggedIn, name, token } = useSelector((store) => store.authReducer);
   const dispatch = useDispatch();
-  const navigate=useNavigate()
+  const navigate = useNavigate();
 
   const searchResults = () => {
-    axios
-      .get(`http://localhost:8080/product/`)
-      .then((res) => console.log(res.data))
-      .catch((err) => console.log(err));
+    setTimeout(() => {
+      axios
+        .get(`${BASE_URL}/product?q=${query}`)
+        .then((res) => setResults(res.data.data))
+        .catch((err) => console.log(err));
+    }, 2000);
   };
+
+  useEffect(() => {
+    document.addEventListener("click", handleClick);
+    return () => {
+      document.removeEventListener("click", handleClick);
+    };
+  });
+
+  const handleClick = () => {
+    setQuery("");
+  };
+
+  const { items } = useSelector((store) => store.cartReducer);
+  useEffect(() => {
+    if (token.length > 0) {
+      dispatch(getCartData);
+    }
+  }, []);
 
   return (
     <Box>
@@ -71,9 +95,47 @@ const Navbar = () => {
               w={{ base: "13rem", sm: "29rem", md: "39rem" }}
               placeholder="Search for Products and Brands"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                searchResults();
+              }}
             />
           </InputGroup>
+          {query && (
+            <Box
+              position={"absolute"}
+              top={"5rem"}
+              bg={"white"}
+              zIndex={"3"}
+              w={{base:"13rem",md:"39rem",lg:"39rem"}}
+              maxH="13rem"
+              border={"1px solid black"}
+              overflowY="scroll"
+              borderRadius="10px"
+            >
+              {results &&
+                results.map((ele) => {
+                  return (
+                    <Link
+                      mb={"1rem"}
+                      onClick={() => setQuery("")}
+                      p={"2rem"}
+                      to={`/product/${ele._id}`}
+                    >
+                      <Flex
+                        alignItems="center"
+                        p="10px"
+                        gap="10px"
+                        _hover={{ bgColor: "teal", color: "white" }}
+                      >
+                        <Image w="3%" h="15%" src={ele.image[0]}></Image>
+                        <Text> {ele.title}</Text>
+                      </Flex>
+                    </Link>
+                  );
+                })}
+            </Box>
+          )}
         </Box>
         <Box
           display={{ base: "none", md: "flex" }}
@@ -90,12 +152,12 @@ const Navbar = () => {
                 <MenuList>
                   <MenuItem>Hi, {name}</MenuItem>
                   <MenuItem>
-                  <Link to={"/profile"}>My Orders</Link></MenuItem>
+                    <Link to={"/profile"}>My Orders</Link>
+                  </MenuItem>
                   <MenuItem>
                     <Button
                       onClick={() => {
-                        dispatch(logout)
-                        navigate("/login")
+                        dispatch(logout());
                       }}
                       variant={"ghost"}
                     >
@@ -114,7 +176,12 @@ const Navbar = () => {
           </Box>
           <Box cursor={"pointer"}>
             <Link to="/cart">
-              <AiOutlineShoppingCart size={"2rem"} />
+              <Flex>
+                <AiOutlineShoppingCart size={"2rem"} />
+                <Badge h="20%" w="40%" borderRadius="50%" colorScheme="green">
+                  {items?.length}
+                </Badge>
+              </Flex>
             </Link>
           </Box>
         </Box>
